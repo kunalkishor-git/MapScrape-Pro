@@ -18,5 +18,5 @@ MapScrape Pro is a professional-grade B2B lead extraction tool. It allows users 
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/YOUR_USERNAME/MapScrape-Pro.git](https://github.com/YOUR_USERNAME/MapScrape-Pro.git)
+   git clone [https://github.com/kunalkishor-git/MapScrape-Pro.git](https://github.com/kunalkishor-git/MapScrape-Pro.git)
    cd MapScrape-Pro
