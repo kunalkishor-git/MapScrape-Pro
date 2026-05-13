@@ -1,5 +1,3 @@
-# MapScrape-Pro
-A powerful Flask-based B2B lead generation tool that extracts business names, emails, phone numbers, and social media links from Google Maps and Search using Selenium and BeautifulSoup.
 # 📍 MapScrape Pro
 
 MapScrape Pro is a professional-grade B2B lead extraction tool. It allows users to scrape business contact information from **Google Maps** and **Google Search** results, including a "Deep Scrape" feature that visits social media profiles to find hidden contact details.
