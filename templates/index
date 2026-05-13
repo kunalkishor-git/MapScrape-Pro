@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MapScrape Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0d0f14;
+            --card: #161920;
+            --border: #252830;
+            --accent: #4ade80;
+            --accent2: #22d3ee;
+            --accent3: #a78bfa;
+            --text: #e8eaf0;
+            --muted: #6b7280;
+            --danger: #f87171;
+            --tag-bg: rgba(74,222,128,.13);
+            --tag-border: rgba(74,222,128,.3);
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(74,222,128,.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(74,222,128,.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        .wrapper { width: 100%; max-width: 600px; }
+
+        /* ── Header ── */
+        .header { text-align: center; margin-bottom: 2.5rem; }
+        .header .badge {
+            display: inline-block;
+            background: rgba(74,222,128,.12);
+            color: var(--accent);
+            font-size: .72rem;
+            font-weight: 500;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            padding: .3rem .85rem;
+            border-radius: 99px;
+            border: 1px solid rgba(74,222,128,.25);
+            margin-bottom: 1rem;
+        }
+        .header h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.6rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #e8eaf0 30%, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header p { color: var(--muted); margin-top: .6rem; font-size: .95rem; }
+
+        /* ── Card ── */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+        }
+
+        /* ── Mode Toggle ── */
+        .mode-toggle {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: #0d0f14;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 1.75rem;
+            gap: 4px;
+        }
+        .mode-btn {
+            padding: .65rem;
+            border-radius: 9px;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            font-family: 'DM Sans', sans-serif;
+            font-size: .88rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background .2s, color .2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .45rem;
+        }
+        .mode-btn.active {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        /* ── Panels ── */
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        /* ── Form ── */
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+        @media(max-width:480px) { .row { grid-template-columns: 1fr; } }
+        .field { display: flex; flex-direction: column; gap: .45rem; margin-bottom: 1rem; }
+
+        label {
+            font-size: .73rem;
+            font-weight: 500;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+        }
+        label span.req { color: var(--accent); }
+        label span.opt {
+            font-size: .65rem;
+            background: rgba(107,114,128,.15);
+            color: var(--muted);
+            padding: .1rem .45rem;
+            border-radius: 4px;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        input, select {
+            background: #0d0f14;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: .95rem;
+            padding: .75rem 1rem;
+            outline: none;
+            transition: border-color .2s;
+            width: 100%;
+        }
+        input::placeholder { color: #3d4250; }
+        input:focus, select:focus { border-color: rgba(74,222,128,.45); }
+        select option { background: #161920; }
+
+        /* ── Social Toggle Card ── */
+        .social-toggle-card {
+            background: rgba(167,139,250,.06);
+            border: 1px solid rgba(167,139,250,.2);
+            border-radius: 14px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        .social-toggle-card .social-icon-row {
+            display: flex;
+            gap: .35rem;
+            flex-wrap: wrap;
+            margin-top: .4rem;
+        }
+        .social-icon {
+            font-size: 1rem;
+            opacity: .6;
+        }
+        .social-toggle-card .stc-body { flex: 1; }
+        .stc-title {
+            font-family: 'Syne', sans-serif;
+            font-size: .95rem;
+            color: var(--accent3);
+            margin-bottom: .2rem;
+        }
+        .stc-desc {
+            font-size: .78rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+        .stc-desc strong { color: var(--text); }
+
+        /* Custom toggle switch */
+        .toggle-wrap {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            margin-top: .15rem;
+        }
+        .toggle-input { display: none; }
+        .toggle-label {
+            width: 44px;
+            height: 24px;
+            background: var(--border);
+            border-radius: 99px;
+            position: relative;
+            cursor: pointer;
+            transition: background .2s;
+            flex-shrink: 0;
+        }
+        .toggle-label::after {
+            content: '';
+            position: absolute;
+            top: 3px; left: 3px;
+            width: 18px; height: 18px;
+            background: var(--muted);
+            border-radius: 50%;
+            transition: transform .2s, background .2s;
+        }
+        .toggle-input:checked + .toggle-label {
+            background: rgba(167,139,250,.3);
+            border: 1px solid rgba(167,139,250,.5);
+        }
+        .toggle-input:checked + .toggle-label::after {
+            transform: translateX(20px);
+            background: var(--accent3);
+        }
+
+        /* Social platforms checkbox grid */
+        .social-platforms {
+            display: none;
+            grid-template-columns: repeat(4, 1fr);
+            gap: .5rem;
+            margin-top: .85rem;
+            padding-top: .85rem;
+            border-top: 1px solid rgba(167,139,250,.15);
+        }
+        .social-platforms.visible { display: grid; }
+        @media(max-width:480px) { .social-platforms { grid-template-columns: repeat(2,1fr); } }
+
+        .plat-check {
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+            background: rgba(167,139,250,.07);
+            border: 1px solid rgba(167,139,250,.15);
+            border-radius: 8px;
+            padding: .4rem .6rem;
+            cursor: pointer;
+            transition: background .15s, border-color .15s;
+            user-select: none;
+            font-size: .8rem;
+            color: var(--muted);
+        }
+        .plat-check input[type=checkbox] { display: none; }
+        .plat-check .plat-dot {
+            width: 10px; height: 10px;
+            border: 2px solid rgba(167,139,250,.4);
+            border-radius: 3px;
+            flex-shrink: 0;
+            transition: background .15s, border-color .15s;
+        }
+        .plat-check.checked {
+            background: rgba(167,139,250,.14);
+            border-color: rgba(167,139,250,.4);
+            color: var(--accent3);
+        }
+        .plat-check.checked .plat-dot {
+            background: var(--accent3);
+            border-color: var(--accent3);
+        }
+
+        /* ── Tag Input ── */
+        .tag-input-wrap {
+            background: #0d0f14;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: .5rem .75rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: .4rem;
+            align-items: center;
+            cursor: text;
+            transition: border-color .2s;
+            min-height: 48px;
+        }
+        .tag-input-wrap:focus-within { border-color: rgba(74,222,128,.45); }
+
+        .tag-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+            background: var(--tag-bg);
+            border: 1px solid var(--tag-border);
+            color: var(--accent);
+            font-size: .8rem;
+            font-weight: 500;
+            padding: .2rem .55rem .2rem .65rem;
+            border-radius: 6px;
+            white-space: nowrap;
+            animation: chipIn .15s ease;
+        }
+        @keyframes chipIn { from { opacity:0; transform:scale(.85); } to { opacity:1; transform:scale(1); } }
+        .tag-chip button {
+            background: none; border: none;
+            color: var(--accent); cursor: pointer;
+            font-size: .85rem; line-height: 1;
+            padding: 0; opacity: .6; transition: opacity .15s;
+        }
+        .tag-chip button:hover { opacity: 1; }
+
+        #tag-type-input {
+            background: none; border: none; outline: none;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: .9rem;
+            flex: 1; min-width: 120px; padding: .25rem 0;
+        }
+        #tag-type-input::placeholder { color: #3d4250; }
+
+        .tag-hint { color: var(--muted); font-size: .76rem; margin-top: .3rem; }
+
+        .preset-tags { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
+        .preset-pill {
+            background: rgba(255,255,255,.04);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-size: .76rem;
+            padding: .2rem .6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background .15s, color .15s, border-color .15s;
+            user-select: none;
+        }
+        .preset-pill:hover { background: var(--tag-bg); color: var(--accent); border-color: var(--tag-border); }
+        .preset-pill.used { opacity: .3; pointer-events: none; }
+
+        /* Pages row */
+        .pages-row { display: flex; align-items: center; gap: .75rem; }
+        .pages-row input[type=range] {
+            flex: 1; padding: 0;
+            accent-color: var(--accent);
+            border: none; background: none;
+        }
+        .pages-val {
+            background: rgba(74,222,128,.12);
+            color: var(--accent);
+            font-size: .8rem; font-weight: 700;
+            padding: .2rem .6rem;
+            border-radius: 6px; min-width: 28px; text-align: center;
+        }
+
+        /* ── Run button ── */
+        #btn-start {
+            width: 100%;
+            background: var(--accent);
+            color: #0a0c10;
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem; font-weight: 700;
+            letter-spacing: .05em;
+            padding: .95rem;
+            border: none; border-radius: 12px;
+            cursor: pointer;
+            transition: opacity .2s, transform .15s;
+            position: relative; overflow: hidden;
+            margin-top: 1.5rem;
+        }
+        #btn-start::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,.15), transparent);
+            pointer-events: none;
+        }
+        #btn-start:hover { opacity: .9; transform: translateY(-1px); }
+        #btn-start:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+        /* ── Status boxes ── */
+        .status-box {
+            margin-top: 1.5rem; border-radius: 14px;
+            padding: 1.5rem; text-align: center; display: none;
+        }
+        .status-box.visible { display: block; }
+
+        #loading { background: rgba(34,211,238,.06); border: 1px solid rgba(34,211,238,.2); }
+        .spinner-ring {
+            width: 40px; height: 40px;
+            border: 3px solid rgba(34,211,238,.15);
+            border-top-color: var(--accent2);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #loading p    { color: var(--accent2); font-size: .9rem; font-weight: 500; }
+        #loading small { color: var(--muted); font-size: .78rem; display: block; margin-top: .4rem; }
+
+        #result-box { background: rgba(74,222,128,.06); border: 1px solid rgba(74,222,128,.2); }
+        #success-msg { color: var(--accent); font-family: 'Syne', sans-serif; font-size: 1.1rem; margin-bottom: 1rem; }
+        .dl-btn {
+            display: inline-block; background: var(--accent); color: #0a0c10;
+            font-family: 'Syne', sans-serif; font-weight: 700; font-size: .88rem;
+            padding: .65rem 2rem; border-radius: 10px; text-decoration: none; transition: opacity .2s;
+        }
+        .dl-btn:hover { opacity: .85; }
+
+        #no-data { background: rgba(248,113,113,.06); border: 1px solid rgba(248,113,113,.2); }
+        #no-data p { color: var(--danger); font-size: .9rem; font-weight: 500; }
+
+        .section-divider {
+            height: 1px; background: var(--border);
+            margin: 1.25rem 0;
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+
+    <div class="header">
+        <div class="badge">B2B Lead Extractor</div>
+        <h1>MapScrape Pro</h1>
+        <p>Phone · Email · Website · Social Media — all in one CSV</p>
+    </div>
+
+    <div class="card">
+
+        <!-- ── Mode Toggle ── -->
+        <div class="mode-toggle">
+            <button class="mode-btn active" id="tab-maps" onclick="switchMode('maps')">
+                📍 Google Maps
+            </button>
+            <button class="mode-btn" id="tab-search" onclick="switchMode('search')">
+                🔍 Google Search
+            </button>
+        </div>
+
+        <!-- ════════════════════════════════
+             MAPS PANEL
+        ════════════════════════════════ -->
+        <div class="panel active" id="panel-maps">
+            <div class="row">
+                <div class="field">
+                    <label>Location <span class="req">*</span></label>
+                    <input id="maps-location" type="text" placeholder="New York, NY">
+                </div>
+                <div class="field">
+                    <label>Keyword <span class="opt">optional</span></label>
+                    <input id="maps-keyword" type="text" placeholder="e.g. Luxury, Vegan">
+                </div>
+            </div>
+            <div class="row">
+                <div class="field">
+                    <label>Category <span class="opt">optional</span></label>
+                    <select id="maps-category" onchange="toggleCustomCategory()">
+                        <option value="">Any Category</option>
+                        <option value="Hotel">Hotel</option>
+                        <option value="Restaurant">Restaurant</option>
+                        <option value="Hospital">Hospital</option>
+                        <option value="Dentist">Dentist</option>
+                        <option value="Real Estate Agency">Real Estate Agency</option>
+                        <option value="Law Firm">Law Firm</option>
+                        <option value="Gym">Gym</option>
+                        <option value="Salon">Salon</option>
+                        <option value="Digital Marketing Agency">Digital Marketing Agency</option>
+                        <option value="custom">Custom (Type your own)...</option>
+                    </select>
+                    <input id="maps-custom-category" type="text" placeholder="e.g. Plumber, Bakery"
+                           style="display:none; margin-top:.5rem; border-color:var(--accent2);">
+                </div>
+                <div class="field">
+                    <label>Max Results <span class="opt">speed vs volume</span></label>
+                    <input id="maps-max" type="number" min="1" max="200" value="20" placeholder="20">
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════
+             SEARCH PANEL
+        ════════════════════════════════ -->
+        <div class="panel" id="panel-search">
+            <div class="field">
+                <label>Search Query <span class="req">*</span></label>
+                <input id="search-query" type="text" placeholder='e.g. marketing agencies in Austin'>
+            </div>
+
+            <!-- Tags -->
+            <div class="field">
+                <label>Filter Tags <span class="opt">optional</span></label>
+                <div class="tag-input-wrap" id="tag-box" onclick="document.getElementById('tag-type-input').focus()">
+                    <input id="tag-type-input" type="text"
+                           placeholder="Type a tag and press Enter or comma…"
+                           onkeydown="handleTagKey(event)">
+                </div>
+                <p class="tag-hint">
+                    Tags refine the query. Press
+                    <kbd style="background:#252830;border-radius:4px;padding:1px 5px;font-size:.75rem;">Enter</kbd> or
+                    <kbd style="background:#252830;border-radius:4px;padding:1px 5px;font-size:.75rem;">,</kbd> to add.
+                    CSV will include a "Tags Matched" column.
+                </p>
+                <div class="preset-tags">
+                    <span style="color:var(--muted);font-size:.75rem;align-self:center;">Quick add:</span>
+                    <span class="preset-pill" onclick="addPreset(this,'B2B')">B2B</span>
+                    <span class="preset-pill" onclick="addPreset(this,'SaaS')">SaaS</span>
+                    <span class="preset-pill" onclick="addPreset(this,'email marketing')">email marketing</span>
+                    <span class="preset-pill" onclick="addPreset(this,'digital marketing')">digital marketing</span>
+                    <span class="preset-pill" onclick="addPreset(this,'ecommerce')">ecommerce</span>
+                    <span class="preset-pill" onclick="addPreset(this,'startup')">startup</span>
+                    <span class="preset-pill" onclick="addPreset(this,'agency')">agency</span>
+                    <span class="preset-pill" onclick="addPreset(this,'freelance')">freelance</span>
+                </div>
+            </div>
+
+            <!-- Pages -->
+            <div class="field">
+                <label>Pages to Scrape <span class="opt">optional</span></label>
+                <div class="pages-row">
+                    <input type="range" id="search-pages" min="1" max="5" value="2"
+                           oninput="document.getElementById('pages-val').textContent=this.value">
+                    <div class="pages-val" id="pages-val">2</div>
+                    <span style="color:var(--muted);font-size:.8rem;">pages (~10 results each)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ════════════════════════════════
+             SOCIAL MEDIA SECTION (shared)
+        ════════════════════════════════ -->
+        <div class="section-divider"></div>
+
+        <div class="social-toggle-card">
+            <div class="stc-body">
+                <div class="stc-title">🔗 Social Media Scraping</div>
+                <div class="stc-desc">
+                    When enabled, the scraper will detect social media links on each website,
+                    visit those pages, and extract any <strong>phone numbers or emails</strong> found there.
+                    Social profile URLs are always saved to the CSV.
+                </div>
+                <div class="social-icon-row" id="social-icon-row">
+                    <span class="social-icon">📘</span>
+                    <span class="social-icon">📸</span>
+                    <span class="social-icon">🐦</span>
+                    <span class="social-icon">💼</span>
+                    <span class="social-icon">▶️</span>
+                    <span class="social-icon">🎵</span>
+                </div>
+
+                <!-- Platform checkboxes — shown when toggle ON -->
+                <div class="social-platforms" id="social-platforms">
+                    <label class="plat-check checked" onclick="togglePlat(this,'facebook')">
+                        <input type="checkbox" checked>
+                        <span class="plat-dot"></span> 📘 Facebook
+                    </label>
+                    <label class="plat-check checked" onclick="togglePlat(this,'instagram')">
+                        <input type="checkbox" checked>
+                        <span class="plat-dot"></span> 📸 Instagram
+                    </label>
+                    <label class="plat-check checked" onclick="togglePlat(this,'linkedin')">
+                        <input type="checkbox" checked>
+                        <span class="plat-dot"></span> 💼 LinkedIn
+                    </label>
+                    <label class="plat-check checked" onclick="togglePlat(this,'twitter')">
+                        <input type="checkbox" checked>
+                        <span class="plat-dot"></span> 🐦 Twitter/X
+                    </label>
+                    <label class="plat-check checked" onclick="togglePlat(this,'youtube')">
+                        <input type="checkbox" checked>
+                        <span class="plat-dot"></span> ▶️ YouTube
+                    </label>
+                    <label class="plat-check checked" onclick="togglePlat(this,'tiktok')">
+                        <input type="checkbox" checked>
+                        <span class="plat-dot"></span> 🎵 TikTok
+                    </label>
+                    <label class="plat-check checked" onclick="togglePlat(this,'pinterest')">
+                        <input type="checkbox" checked>
+                        <span class="plat-dot"></span> 📌 Pinterest
+                    </label>
+                </div>
+
+                <!-- Warning shown when deep scrape is on -->
+                <p id="social-warn" style="display:none;color:var(--accent3);font-size:.76rem;margin-top:.75rem;">
+                    ⚠️ Deep scraping visits every social profile — this adds significant time per result.
+                    For faster runs, keep this OFF; social URLs will still be saved from the website.
+                </p>
+            </div>
+
+            <!-- Toggle switch -->
+            <div class="toggle-wrap">
+                <input type="checkbox" id="social-toggle" class="toggle-input" onchange="onSocialToggle(this)">
+                <label for="social-toggle" class="toggle-label"></label>
+            </div>
+        </div>
+
+        <button id="btn-start" onclick="startScraping()">⚡ RUN EXTRACTOR</button>
+
+        <!-- Loading -->
+        <div class="status-box" id="loading">
+            <div class="spinner-ring"></div>
+            <p>Scraping live data…</p>
+            <small id="loading-hint">Visiting each result to extract contacts. This may take a few minutes.</small>
+        </div>
+
+        <!-- Success -->
+        <div class="status-box" id="result-box">
+            <p id="success-msg"></p>
+            <a href="/download" class="dl-btn">↓ Download CSV</a>
+        </div>
+
+        <!-- No data -->
+        <div class="status-box" id="no-data">
+            <p>No results found. Try a different query or location.</p>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // ── Tag state ──────────────────────────────────────
+    let tags = [];
+
+    function renderTags() {
+        const box   = document.getElementById('tag-box');
+        const input = document.getElementById('tag-type-input');
+        box.querySelectorAll('.tag-chip').forEach(c => c.remove());
+        tags.forEach((t, i) => {
+            const chip = document.createElement('span');
+            chip.className = 'tag-chip';
+            chip.innerHTML = `${escHtml(t)}<button onclick="removeTag(${i})" title="Remove">×</button>`;
+            box.insertBefore(chip, input);
+        });
+        document.querySelectorAll('.preset-pill').forEach(p => {
+            p.classList.toggle('used', tags.includes(p.textContent.trim()));
+        });
+    }
+
+    function addTag(raw) {
+        const val = raw.trim().replace(/,+$/, '').trim();
+        if (val && !tags.includes(val)) { tags.push(val); renderTags(); }
+    }
+    function removeTag(i) { tags.splice(i, 1); renderTags(); }
+    function handleTagKey(e) {
+        const input = e.target;
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault(); addTag(input.value); input.value = '';
+        } else if (e.key === 'Backspace' && input.value === '' && tags.length) {
+            removeTag(tags.length - 1);
+        }
+    }
+    function addPreset(el, tag) { addTag(tag); el.classList.add('used'); }
+    function escHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // ── Mode switch ────────────────────────────────────
+    let currentMode = 'maps';
+    function switchMode(mode) {
+        currentMode = mode;
+        document.getElementById('panel-maps').classList.toggle('active', mode === 'maps');
+        document.getElementById('panel-search').classList.toggle('active', mode === 'search');
+        document.getElementById('tab-maps').classList.toggle('active', mode === 'maps');
+        document.getElementById('tab-search').classList.toggle('active', mode === 'search');
+        ['loading','result-box','no-data'].forEach(id =>
+            document.getElementById(id).classList.remove('visible'));
+    }
+
+    // ── Custom Category ────────────────────────────────
+    function toggleCustomCategory() {
+        const sel = document.getElementById('maps-category');
+        const inp = document.getElementById('maps-custom-category');
+        inp.style.display = sel.value === 'custom' ? 'block' : 'none';
+        if (sel.value === 'custom') inp.focus();
+    }
+
+    // ── Social Toggle ──────────────────────────────────
+    function onSocialToggle(cb) {
+        const platforms = document.getElementById('social-platforms');
+        const warn      = document.getElementById('social-warn');
+        const iconRow   = document.getElementById('social-icon-row');
+        if (cb.checked) {
+            platforms.classList.add('visible');
+            warn.style.display = 'block';
+            iconRow.style.display = 'none';
+        } else {
+            platforms.classList.remove('visible');
+            warn.style.display = 'none';
+            iconRow.style.display = 'flex';
+        }
+    }
+
+    function togglePlat(el) {
+        el.classList.toggle('checked');
+        el.querySelector('input[type=checkbox]').checked = el.classList.contains('checked');
+    }
+
+    function getSelectedPlatforms() {
+        return Array.from(document.querySelectorAll('.plat-check.checked'))
+            .map(el => el.textContent.trim()
+                .replace(/[📘📸💼🐦▶️🎵📌]/gu, '')
+                .replace('Twitter/X','twitter')
+                .trim().toLowerCase()
+            );
+    }
+
+    // ── Scrape ────────────────────────────────────────
+    async function startScraping() {
+        const btn       = document.getElementById('btn-start');
+        const loading   = document.getElementById('loading');
+        const resultBox = document.getElementById('result-box');
+        const noData    = document.getElementById('no-data');
+
+        const typeInput = document.getElementById('tag-type-input');
+        if (typeInput && typeInput.value.trim()) { addTag(typeInput.value); typeInput.value = ''; }
+
+        const socialOn = document.getElementById('social-toggle').checked;
+
+        let payload = {
+            mode: currentMode,
+            scrape_social: socialOn,
+        };
+
+        if (currentMode === 'maps') {
+            const loc = document.getElementById('maps-location').value.trim();
+            if (!loc) { alert("Location is required for Maps mode!"); return; }
+            payload.location    = loc;
+            payload.keyword     = document.getElementById('maps-keyword').value.trim();
+            let cat = document.getElementById('maps-category').value;
+            if (cat === 'custom') cat = document.getElementById('maps-custom-category').value.trim();
+            payload.category    = cat;
+            payload.max_results = parseInt(document.getElementById('maps-max').value) || 20;
+            document.getElementById('loading-hint').textContent =
+                `Scraping up to ${payload.max_results} Maps listings${socialOn ? ' + social profiles' : ''}…`;
+        } else {
+            const q = document.getElementById('search-query').value.trim();
+            if (!q) { alert("Search query is required!"); return; }
+            payload.search_query = q;
+            payload.tags         = tags;
+            payload.pages        = document.getElementById('search-pages').value;
+            const tagNote = tags.length ? ` with ${tags.length} tag(s)` : '';
+            document.getElementById('loading-hint').textContent =
+                `Searching Google${tagNote}${socialOn ? ' + visiting social profiles' : ''}… This may take a few minutes.`;
+        }
+
+        btn.disabled = true;
+        loading.classList.add('visible');
+        resultBox.classList.remove('visible');
+        noData.classList.remove('visible');
+
+        try {
+            const res  = await fetch('/scrape', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            loading.classList.remove('visible');
+            btn.disabled = false;
+
+            if (data.status === 'success') {
+                document.getElementById('success-msg').textContent =
+                    `✓ ${data.count} leads extracted successfully!`;
+                resultBox.classList.add('visible');
+            } else {
+                noData.classList.add('visible');
+            }
+        } catch (err) {
+            loading.classList.remove('visible');
+            btn.disabled = false;
+            alert("Server error — make sure Python is running.");
+        }
+    }
+</script>
+</body>
+</html>
